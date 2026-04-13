@@ -130,9 +130,11 @@ export async function createBundleMcpToolRuntime(params: {
   workspaceDir: string;
   cfg?: OpenClawConfig;
   reservedToolNames?: Iterable<string>;
+  sessionKey?: string;
 }): Promise<BundleMcpToolRuntime> {
   const runtime = createSessionMcpRuntime({
     sessionId: `bundle-mcp:${crypto.randomUUID()}`,
+    sessionKey: params.sessionKey,
     workspaceDir: params.workspaceDir,
     cfg: params.cfg,
   });

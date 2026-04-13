@@ -541,6 +541,7 @@ export async function compactEmbeddedPiSessionDirect(
           workspaceDir: effectiveWorkspace,
           cfg: params.config,
           reservedToolNames: tools.map((tool) => tool.name),
+          sessionKey: params.sessionKey,
         })
       : undefined;
     const bundleLspRuntime = toolsEnabled
