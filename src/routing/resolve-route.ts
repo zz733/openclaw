@@ -82,10 +82,10 @@ function normalizeToken(value: string | undefined | null): string {
 
 function normalizeId(value: unknown): string {
   if (typeof value === "string") {
-    return value.trim();
+    return value.trim().toLowerCase();
   }
   if (typeof value === "number" || typeof value === "bigint") {
-    return String(value).trim();
+    return String(value).trim().toLowerCase();
   }
   return "";
 }

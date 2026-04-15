@@ -41,10 +41,10 @@ cd "$OPENCLAW_DIR"
 # 检查本地补丁状态
 echo ""
 echo "[检查] 本地补丁状态..."
-PATCH_COUNT=$(git diff HEAD -- src/agents/pi-bundle-mcp-materialize.ts src/agents/pi-embedded-runner/compact.ts | grep -c '^[+-]' | grep -v '^[+-][+-][+-]' || true)
+PATCH_COUNT=$(git diff HEAD -- src/agents/pi-bundle-mcp-materialize.ts src/agents/pi-embedded-runner/compact.ts src/routing/resolve-route.ts | grep -c '^[+-]' | grep -v '^[+-][+-][+-]' || true)
 if [ "$PATCH_COUNT" -gt 0 ]; then
-    echo "  ✓ 检测到 sessionKey 补丁（$PATCH_COUNT 行变更）"
-    git diff HEAD --stat -- src/agents/pi-bundle-mcp-materialize.ts src/agents/pi-embedded-runner/compact.ts | sed 's/^/    /'
+    echo "  ✓ 检测到补丁（$PATCH_COUNT 行变更）"
+    git diff HEAD --stat -- src/agents/pi-bundle-mcp-materialize.ts src/agents/pi-embedded-runner/compact.ts src/routing/resolve-route.ts | sed 's/^/    /'
 else
     echo "  ⚠ 未检测到 sessionKey 补丁变更"
 fi
@@ -57,6 +57,13 @@ if [ "$SESSION_KEY_COUNT" -gt 0 ]; then
     echo "  ✓ 服务器已包含 sessionKey 补丁（$SESSION_KEY_COUNT 处匹配）"
 else
     echo "  ✗ 服务器未包含 sessionKey 补丁"
+fi
+
+NORMALIZE_ID_COUNT=$(ssh "$SERVER" "grep -c 'trim().toLowerCase()' /usr/lib/node_modules/openclaw/dist/resolve-route-*.js 2>/dev/null || echo 0")
+if [ "$NORMALIZE_ID_COUNT" -gt 0 ]; then
+    echo "  ✓ 服务器已包含 normalizeId 大小写无关补丁（$NORMALIZE_ID_COUNT 处匹配）"
+else
+    echo "  ✗ 服务器未包含 normalizeId 大小写无关补丁"
 fi
 
 if [ "$CHECK_ONLY" = true ]; then
