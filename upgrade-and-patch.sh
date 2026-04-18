@@ -24,16 +24,44 @@ TEMP_DIR="/tmp/openclaw-deploy-$$"
 SKIP_SYNC=false
 CHECK_ONLY=false
 SKIP_DEPLOY=false
+PATCH_METHOD="auto"
 
 # 解析参数
-for arg in "$@"; do
-    case $arg in
-        --skip-sync) SKIP_SYNC=true ;;
-        --check-only) CHECK_ONLY=true ;;
-        --skip-deploy) SKIP_DEPLOY=true ;;
-        *) echo "未知参数: $arg"; echo "用法: $0 [--skip-sync] [--check-only] [--skip-deploy]"; exit 1 ;;
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --skip-sync)
+            SKIP_SYNC=true
+            shift
+            ;;
+        --check-only)
+            CHECK_ONLY=true
+            shift
+            ;;
+        --skip-deploy)
+            SKIP_DEPLOY=true
+            shift
+            ;;
+        --patch-method)
+            if [ -z "${2:-}" ]; then
+                echo "错误: --patch-method 需要参数 (sed|git|auto)"
+                echo "用法: $0 [--skip-sync] [--check-only] [--skip-deploy] [--patch-method sed|git|auto]"
+                exit 1
+            fi
+            PATCH_METHOD="$2"
+            shift 2
+            ;;
+        *)
+            echo "未知参数: $1"
+            echo "用法: $0 [--skip-sync] [--check-only] [--skip-deploy] [--patch-method sed|git|auto]"
+            exit 1
+            ;;
     esac
 done
+
+if [ "$PATCH_METHOD" != "sed" ] && [ "$PATCH_METHOD" != "git" ] && [ "$PATCH_METHOD" != "auto" ]; then
+    echo "错误: --patch-method 仅支持 sed 、 git 或 auto"
+    exit 1
+fi
 
 echo "========================================="
 echo "OpenClaw 升级 + SessionKey 补丁自动化"
@@ -172,7 +200,8 @@ fi
 
 # ==================== 步骤 3: 动态应用 SessionKey 补丁 ====================
 echo ""
-echo "[步骤 3/6] 动态应用 SessionKey 补丁到官方源码..."
+echo "[步骤 3/6] 应用 SessionKey 补丁到官方源码..."
+echo "  补丁方式: $PATCH_METHOD"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PATCH_SCRIPT="$SCRIPT_DIR/apply-sessionkey-patch.sh"
@@ -183,12 +212,12 @@ if [ ! -f "$PATCH_SCRIPT" ]; then
 fi
 
 # 应用补丁
-bash "$PATCH_SCRIPT"
+bash "$PATCH_SCRIPT" --method "$PATCH_METHOD"
 
 # 验证补丁
 echo ""
 echo "  验证补丁..."
-if bash "$PATCH_SCRIPT" --check 2>&1 | grep -q "✓"; then
+if bash "$PATCH_SCRIPT" --check --method "$PATCH_METHOD" 2>&1 | grep -q "✓"; then
     echo "  ✓ 补丁验证成功"
 else
     echo "  ✗ 补丁验证失败"
