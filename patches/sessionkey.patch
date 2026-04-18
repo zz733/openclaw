@@ -1,0 +1,45 @@
+diff --git a/src/agents/pi-bundle-mcp-materialize.ts b/src/agents/pi-bundle-mcp-materialize.ts
+index 8cf6ecc..e788c95 100644
+--- a/src/agents/pi-bundle-mcp-materialize.ts
++++ b/src/agents/pi-bundle-mcp-materialize.ts
+@@ -130,9 +130,11 @@ export async function createBundleMcpToolRuntime(params: {
+   workspaceDir: string;
+   cfg?: OpenClawConfig;
+   reservedToolNames?: Iterable<string>;
++  sessionKey?: string;
+ }): Promise<BundleMcpToolRuntime> {
+   const runtime = createSessionMcpRuntime({
+     sessionId: `bundle-mcp:${crypto.randomUUID()}`,
++    sessionKey: params.sessionKey,
+     workspaceDir: params.workspaceDir,
+     cfg: params.cfg,
+   });
+diff --git a/src/agents/pi-embedded-runner/compact.ts b/src/agents/pi-embedded-runner/compact.ts
+index 2c4236e..99770f1 100644
+--- a/src/agents/pi-embedded-runner/compact.ts
++++ b/src/agents/pi-embedded-runner/compact.ts
+@@ -541,6 +541,7 @@ export async function compactEmbeddedPiSessionDirect(
+           workspaceDir: effectiveWorkspace,
+           cfg: params.config,
+           reservedToolNames: tools.map((tool) => tool.name),
++          sessionKey: params.sessionKey,
+         })
+       : undefined;
+     const bundleLspRuntime = toolsEnabled
+diff --git a/src/routing/resolve-route.ts b/src/routing/resolve-route.ts
+index 7bceb71..5ddab00 100644
+--- a/src/routing/resolve-route.ts
++++ b/src/routing/resolve-route.ts
+@@ -82,10 +82,10 @@ function normalizeToken(value: string | undefined | null): string {
+ 
+ function normalizeId(value: unknown): string {
+   if (typeof value === "string") {
+-    return value.trim();
++    return value.trim().toLowerCase();
+   }
+   if (typeof value === "number" || typeof value === "bigint") {
+-    return String(value).trim();
++    return String(value).trim().toLowerCase();
+   }
+   return "";
+ }
