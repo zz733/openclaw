@@ -1,12 +1,17 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { createProviderApiKeyAuthMethod } from "openclaw/plugin-sdk/provider-auth-api-key";
 import { buildProviderReplayFamilyHooks } from "openclaw/plugin-sdk/provider-model-shared";
+import { createDeepSeekV4OpenAICompatibleThinkingWrapper } from "openclaw/plugin-sdk/provider-stream-shared";
 import { applyOpencodeGoConfig, OPENCODE_GO_DEFAULT_MODEL_REF } from "./api.js";
 
 const PROVIDER_ID = "opencode-go";
 const PASSTHROUGH_GEMINI_REPLAY_HOOKS = buildProviderReplayFamilyHooks({
   family: "passthrough-gemini",
 });
+
+function isOpencodeGoDeepSeekV4ModelId(modelId: unknown): boolean {
+  return modelId === "deepseek-v4-flash" || modelId === "deepseek-v4-pro";
+}
 
 export default definePluginEntry({
   id: PROVIDER_ID,
@@ -48,6 +53,13 @@ export default definePluginEntry({
         }),
       ],
       ...PASSTHROUGH_GEMINI_REPLAY_HOOKS,
+      wrapStreamFn: (ctx) =>
+        createDeepSeekV4OpenAICompatibleThinkingWrapper({
+          baseStreamFn: ctx.streamFn,
+          thinkingLevel: ctx.thinkingLevel,
+          shouldPatchModel: (model) =>
+            model.provider === "opencode-go" && isOpencodeGoDeepSeekV4ModelId(model.id),
+        }),
       isModernModelRef: () => true,
     });
   },

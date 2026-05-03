@@ -570,6 +570,7 @@ export async function runEmbeddedAttempt(
             ...tools.map((tool) => tool.name),
             ...(clientTools?.map((tool) => tool.function.name) ?? []),
           ],
+          sessionKey: params.sessionKey,
         })
       : undefined;
     const bundleLspRuntime = toolsEnabled

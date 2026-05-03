@@ -11,7 +11,7 @@
 
 set -e
 
-OPENCLAW_DIR="/Users/liuguanghua/CascadeProjects/openclaw-erp/openclaw"
+OPENCLAW_DIR="/Users/liuguanghua/cascade/openclaw-erp/openclaw"
 PATCH_FILE_DEFAULT="$OPENCLAW_DIR/patches/sessionkey.patch"
 
 CHECK_MODE=false
@@ -77,6 +77,7 @@ cd "$OPENCLAW_DIR"
 FILE1="src/agents/pi-bundle-mcp-materialize.ts"
 FILE2="src/agents/pi-embedded-runner/compact.ts"
 FILE3="src/routing/resolve-route.ts"
+FILE4="src/agents/pi-embedded-runner/run/attempt.ts"
 
 check_with_sed() {
   local ok=0
@@ -103,6 +104,20 @@ check_with_sed() {
     ok=1
   fi
 
+  if grep -q '_meta.*sessionKey' "$FILE1"; then
+    echo "  ✓ $FILE1 _meta注入 已应用"
+  else
+    echo "  ✗ $FILE1 _meta注入 未应用"
+    ok=1
+  fi
+
+  if grep -q 'sessionKey: params.sessionKey,' "$FILE4"; then
+    echo "  ✓ $FILE4 已应用"
+  else
+    echo "  ✗ $FILE4 未应用"
+    ok=1
+  fi
+
   return "$ok"
 }
 
@@ -114,6 +129,33 @@ apply_with_sed() {
   else
     sed -i.bak 's/reservedToolNames?: Iterable<string>;/reservedToolNames?: Iterable<string>;\n  sessionKey?: string;/' "$FILE1"
     sed -i.bak 's/sessionId: `bundle-mcp:${crypto.randomUUID()}`,/sessionId: `bundle-mcp:${crypto.randomUUID()}`,\n    sessionKey: params.sessionKey,/' "$FILE1"
+    rm -f "$FILE1.bak"
+    echo "  ✓ 已应用"
+  fi
+
+  echo ""
+  echo "[处理] $FILE1 _meta注入"
+  if grep -q '_meta.*sessionKey' "$FILE1"; then
+    echo "  ⚠️  _meta注入补丁可能已应用，跳过"
+  else
+    sed -i.bak '/execute: async (_toolCallId: string, input: unknown) => {/a\
+        // 注入 sessionKey 到 _meta（myclaw 从 _meta.sessionKey 取身份信息）\
+        if (params.sessionKey) {\
+          const inputObj = (typeof input === '\''object'\'' \&\& input !== null ? input : {}) as Record<string, unknown>;\
+          if (!inputObj._meta) inputObj._meta = {};\
+          (inputObj._meta as Record<string, unknown>).sessionKey = params.sessionKey;\
+          input = inputObj;\
+        }' "$FILE1"
+    rm -f "$FILE1.bak"
+    echo "  ✓ 已应用"
+  fi
+
+  echo ""
+  echo "[处理] $FILE1 createBundleMcpToolRuntime sessionKey传递"
+  if grep -A1 "reservedToolNames: params.reservedToolNames," "$FILE1" | grep -q "sessionKey: params.sessionKey,"; then
+    echo "  ⚠️  补丁可能已应用，跳过"
+  else
+    sed -i.bak 's/reservedToolNames: params.reservedToolNames,/reservedToolNames: params.reservedToolNames,\n    sessionKey: params.sessionKey,/' "$FILE1"
     rm -f "$FILE1.bak"
     echo "  ✓ 已应用"
   fi
@@ -138,6 +180,25 @@ apply_with_sed() {
     rm -f "$FILE3.bak"
     echo "  ✓ 已应用"
   fi
+
+  echo ""
+  echo "[处理] $FILE4"
+  if grep -q 'sessionKey: params.sessionKey,' "$FILE4"; then
+    echo "  ⚠️  补丁可能已应用，跳过"
+  else
+    sed -i.bak '/reservedToolNames: \[/{
+      /clientTools/!b
+      n
+      /\]/a\
+          sessionKey: params.sessionKey,
+    }' "$FILE4"
+    # 如果上面的多行 sed 不生效，用简单替换兜底
+    if ! grep -q 'sessionKey: params.sessionKey,' "$FILE4"; then
+      sed -i.bak 's/\.\.\.(clientTools?.map((tool) => tool.function.name) ?? \[\]),/\.\.\.(clientTools?.map((tool) => tool.function.name) ?? []),\n          sessionKey: params.sessionKey,/' "$FILE4"
+    fi
+    rm -f "$FILE4.bak"
+    echo "  ✓ 已应用"
+  fi
 }
 
 revert_with_sed() {
@@ -145,9 +206,11 @@ revert_with_sed() {
   echo "[撤销] sed 补丁"
   sed -i.bak '/sessionKey?: string;/d' "$FILE1"
   sed -i.bak '/sessionKey: params.sessionKey,/d' "$FILE1"
+  sed -i.bak '/注入 sessionKey 到 _meta/,/^        }/d' "$FILE1"
   sed -i.bak '/reservedToolNames: tools.map((tool) => tool.name),/{n;/sessionKey: params.sessionKey,/d;}' "$FILE2"
   sed -i.bak 's/\.trim()\.toLowerCase()/\.trim()/g' "$FILE3"
-  rm -f "$FILE1.bak" "$FILE2.bak" "$FILE3.bak"
+  sed -i.bak '/sessionKey: params.sessionKey,/d' "$FILE4"
+  rm -f "$FILE1.bak" "$FILE2.bak" "$FILE3.bak" "$FILE4.bak"
   echo "  ✓ 撤销完成"
 }
 
@@ -298,7 +361,7 @@ fi
 echo "========================================="
 echo ""
 echo "验证修改："
-echo "  git diff $FILE1 $FILE2 $FILE3"
+echo "  git diff $FILE1 $FILE2 $FILE3 $FILE4"
 echo ""
 echo "编译："
 echo "  bun run build"

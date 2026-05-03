@@ -63,6 +63,7 @@ function toAgentToolResult(params: {
 export async function materializeBundleMcpToolsForRun(params: {
   runtime: SessionMcpRuntime;
   reservedToolNames?: Iterable<string>;
+  sessionKey?: string;
   disposeRuntime?: () => Promise<void>;
 }): Promise<BundleMcpToolRuntime> {
   params.runtime.markUsed();
@@ -103,6 +104,18 @@ export async function materializeBundleMcpToolsForRun(params: {
       description: tool.description || tool.fallbackDescription,
       parameters: tool.inputSchema,
       execute: async (_toolCallId: string, input: unknown) => {
+        // 注入 sessionKey 到 _meta（myclaw 从 _meta.sessionKey 取身份信息）
+        if (params.sessionKey) {
+          const inputObj = (typeof input === "object" && input !== null ? input : {}) as Record<
+            string,
+            unknown
+          >;
+          if (!inputObj._meta) {
+            inputObj._meta = {};
+          }
+          (inputObj._meta as Record<string, unknown>).sessionKey = params.sessionKey;
+          input = inputObj;
+        }
         const result = await params.runtime.callTool(tool.serverName, tool.toolName, input);
         return toAgentToolResult({
           serverName: tool.serverName,
@@ -141,6 +154,7 @@ export async function createBundleMcpToolRuntime(params: {
   const materialized = await materializeBundleMcpToolsForRun({
     runtime,
     reservedToolNames: params.reservedToolNames,
+    sessionKey: params.sessionKey,
     disposeRuntime: async () => {
       await runtime.dispose();
     },
