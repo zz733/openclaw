@@ -186,16 +186,8 @@ apply_with_sed() {
   if grep -q 'sessionKey: params.sessionKey,' "$FILE4"; then
     echo "  ⚠️  补丁可能已应用，跳过"
   else
-    sed -i.bak '/reservedToolNames: \[/{
-      /clientTools/!b
-      n
-      /\]/a\
-          sessionKey: params.sessionKey,
-    }' "$FILE4"
-    # 如果上面的多行 sed 不生效，用简单替换兜底
-    if ! grep -q 'sessionKey: params.sessionKey,' "$FILE4"; then
-      sed -i.bak 's/\.\.\.(clientTools?.map((tool) => tool.function.name) ?? \[\]),/\.\.\.(clientTools?.map((tool) => tool.function.name) ?? []),\n          sessionKey: params.sessionKey,/' "$FILE4"
-    fi
+    # attempt.ts 调用处: 在 reservedToolNames 数组闭合后加 sessionKey
+    sed -i.bak 's/\.\.\.(clientTools?.map((tool) => tool\.function\.name) ?? \[\]),/\.\.\.(clientTools?.map((tool) => tool.function.name) ?? []),\n          sessionKey: params.sessionKey,/' "$FILE4"
     rm -f "$FILE4.bak"
     echo "  ✓ 已应用"
   fi

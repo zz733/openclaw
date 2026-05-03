@@ -1,0 +1,272 @@
+{
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "heartbeat": {
+        "every": "30m"
+      },
+      "model": {
+        "primary": "opencode-go/deepseek-v4-flash"
+      },
+      "models": {
+        "deepseek/deepseek-chat": {
+          "alias": "DeepSeek"
+        },
+        "deepseek/deepseek-v4-flash": {},
+        "opencode-go/deepseek-v4-flash": {},
+        "opencode-go/glm-5": {
+          "alias": "GLM"
+        },
+        "opencode-go/kimi-k2.5": {
+          "alias": "Kimi"
+        },
+        "opencode-go/minimax-m2.5": {
+          "alias": "MiniMax"
+        }
+      },
+      "sandbox": {
+        "docker": {
+          "capDrop": ["ALL"],
+          "containerPrefix": "openclaw-sbx-",
+          "cpus": 1.5,
+          "dns": ["1.1.1.1", "8.8.8.8"],
+          "env": {
+            "LANG": "C.UTF-8"
+          },
+          "extraHosts": ["host.docker.internal:host-gateway"],
+          "image": "localhost/openclaw-sandbox:bookworm-slim",
+          "memory": "512m",
+          "network": "bridge",
+          "pidsLimit": 256,
+          "readOnlyRoot": true,
+          "tmpfs": ["/tmp", "/var/tmp", "/run"],
+          "workdir": "/workspace"
+        },
+        "mode": "off",
+        "prune": {
+          "idleHours": 24,
+          "maxAgeDays": 7
+        },
+        "scope": "agent",
+        "workspaceAccess": "rw"
+      },
+      "workspace": "/Users/liuguanghua/.openclaw/workspace"
+    },
+    "list": [
+      {
+        "id": "mcp_proxy_agent",
+        "model": "opencode-go/deepseek-v4-flash",
+        "skills": [
+          "mcp:XiaoyumiERP_inventory",
+          "mcp:XiaoyumiERP_basic",
+          "mcp:XiaoyumiERP_report",
+          "mcp:XiaoyumiERP_finance",
+          "mcp:XiaoyumiERP_purchase",
+          "mcp:XiaoyumiERP_crm",
+          "mcp:XiaoyumiERP_manufacturing",
+          "mcp:XiaoyumiERP_sales",
+          "mcp:XiaoyumiERP_retail",
+          "mcp:XiaoyumiERP_system"
+        ],
+        "workspace": "/Users/liuguanghua/openclaw_workspace/mcp_proxy_agent"
+      },
+      {
+        "default": true,
+        "id": "default_agent",
+        "model": "opencode-go/deepseek-v4-flash",
+        "skills": [],
+        "workspace": "/Users/liuguanghua/openclaw_workspace/default_agent"
+      }
+    ]
+  },
+  "auth": {
+    "profiles": {
+      "opencode-go:default": {
+        "mode": "api_key",
+        "provider": "opencode-go"
+      },
+      "opencode:default": {
+        "mode": "api_key",
+        "provider": "opencode"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "mcp_proxy_agent",
+      "match": {
+        "accountId": "*",
+        "channel": "openclaw-weixin",
+        "peer": {
+          "id": "*",
+          "kind": "direct"
+        }
+      }
+    },
+    {
+      "agentId": "mcp_proxy_agent",
+      "match": {
+        "accountId": "*",
+        "channel": "qqbot"
+      }
+    }
+  ],
+  "channels": {
+    "openclaw-weixin": {
+      "accounts": {
+        "ca0ba99018f3-im-bot": {
+          "enabled": true
+        }
+      },
+      "toolPolicy": "auto-approve-local"
+    }
+  },
+  "gateway": {
+    "auth": {
+      "mode": "token",
+      "token": "34762a9f67beb702b7cb4095d8138213805a1f3abe7304c0"
+    },
+    "mode": "local"
+  },
+  "mcp": {
+    "servers": {
+      "XiaoyumiERP_basic": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/basic"
+      },
+      "XiaoyumiERP_crm": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/crm"
+      },
+      "XiaoyumiERP_finance": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/finance"
+      },
+      "XiaoyumiERP_inventory": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/inventory"
+      },
+      "XiaoyumiERP_manufacturing": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/manufacturing"
+      },
+      "XiaoyumiERP_purchase": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/purchase"
+      },
+      "XiaoyumiERP_report": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/report"
+      },
+      "XiaoyumiERP_retail": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/retail"
+      },
+      "XiaoyumiERP_sales": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/sales"
+      },
+      "XiaoyumiERP_system": {
+        "headers": {},
+        "transport": "streamable-http",
+        "url": "http://127.0.0.1:9090/api/mcp-proxy/xiaoyumi/system"
+      }
+    }
+  },
+  "meta": {
+    "lastTouchedAt": "2026-05-02T15:40:28.351Z",
+    "lastTouchedVersion": "2026.4.10"
+  },
+  "models": {
+    "mode": "replace",
+    "providers": {
+      "minimax": {
+        "api": "openai-completions",
+        "apiKey": "sk-cp-eN1sW4gVsYqT-vBQAV65zGTuRKu1mybZa90xD9d2M3lLME_EdUHUA1AtXZ8t0g_771tAPZY2xInluWZqogtBiKizMGicKdZcXAbJXvOygTJS1LdqXEuz3oQ",
+        "baseUrl": "https://api.minimaxi.com/v1",
+        "models": [
+          {
+            "compat": {
+              "supportsTools": true
+            },
+            "id": "MiniMax-M2.7-highspeed",
+            "input": ["text"],
+            "name": "MiniMax-M2.7-highspeed"
+          }
+        ]
+      },
+      "opencode-go": {
+        "api": "openai-completions",
+        "apiKey": "sk-WOQYJK9jrFulDYEfT45bE6EPldB800FWt72v6x4ey3iqSmWLwxCKe2LXOQhqFW4X",
+        "baseUrl": "https://opencode.ai/zen/go/v1",
+        "models": [
+          {
+            "compat": {
+              "supportsTools": true
+            },
+            "id": "deepseek-v4-flash",
+            "input": ["text"],
+            "name": "deepseek-v4-flash"
+          }
+        ]
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "deepseek": {
+        "enabled": false
+      },
+      "minimax": {
+        "enabled": true
+      },
+      "openclaw-weixin": {
+        "enabled": true
+      },
+      "opencode-go": {
+        "enabled": true
+      }
+    },
+    "installs": {
+      "openclaw-weixin": {
+        "installPath": "/Users/liuguanghua/.openclaw/extensions/openclaw-weixin",
+        "installedAt": "2026-05-01T13:38:42.572Z",
+        "integrity": "sha512-lSiTI+9eQQuvZXehuteNps3Ia4/ih5zml6QEgICwA2+9xT1sd5z8C+ldgRfrYd8lZTxYWC8ffkLtG0EVo2E7Ag==",
+        "resolvedAt": "2026-05-01T13:38:04.356Z",
+        "resolvedName": "@tencent-weixin/openclaw-weixin",
+        "resolvedSpec": "@tencent-weixin/openclaw-weixin@2.1.1",
+        "resolvedVersion": "2.1.1",
+        "shasum": "574c53a912986bc6b97ae672c1af0327f8be2fcb",
+        "source": "npm",
+        "spec": "@tencent-weixin/openclaw-weixin@2.1.1",
+        "version": "2.1.1"
+      }
+    }
+  },
+  "session": {
+    "dmScope": "per-account-channel-peer"
+  },
+  "tools": {
+    "sandbox": {
+      "tools": {
+        "allow": ["read", "write", "edit"],
+        "deny": ["exec", "process"]
+      }
+    }
+  }
+}
