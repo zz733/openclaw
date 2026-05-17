@@ -14,21 +14,12 @@
       "model": {
         "primary": "opencode-go/deepseek-v4-flash"
       },
+      "imageModel": {
+        "primary": "opencode/qwen3.5-plus"
+      },
       "models": {
-        "deepseek/deepseek-chat": {
-          "alias": "DeepSeek"
-        },
-        "deepseek/deepseek-v4-flash": {},
         "opencode-go/deepseek-v4-flash": {},
-        "opencode-go/glm-5": {
-          "alias": "GLM"
-        },
-        "opencode-go/kimi-k2.5": {
-          "alias": "Kimi"
-        },
-        "opencode-go/minimax-m2.5": {
-          "alias": "MiniMax"
-        }
+        "opencode/qwen3.5-plus": {}
       },
       "sandbox": {
         "docker": {
@@ -122,6 +113,9 @@
       "accounts": {
         "ca0ba99018f3-im-bot": {
           "enabled": true
+        },
+        "mp-official": {
+          "enabled": true
         }
       },
       "toolPolicy": "auto-approve-local"
@@ -195,18 +189,18 @@
   "models": {
     "mode": "replace",
     "providers": {
-      "minimax": {
+      "opencode": {
         "api": "openai-completions",
-        "apiKey": "sk-cp-eN1sW4gVsYqT-vBQAV65zGTuRKu1mybZa90xD9d2M3lLME_EdUHUA1AtXZ8t0g_771tAPZY2xInluWZqogtBiKizMGicKdZcXAbJXvOygTJS1LdqXEuz3oQ",
-        "baseUrl": "https://api.minimaxi.com/v1",
+        "apiKey": "sk-WOQYJK9jrFulDYEfT45bE6EPldB800FWt72v6x4ey3iqSmWLwxCKe2LXOQhqFW4X",
+        "baseUrl": "https://opencode.ai/zen/v1",
         "models": [
           {
+            "id": "qwen3.5-plus",
+            "name": "qwen3.5-plus",
+            "input": ["text", "image"],
             "compat": {
               "supportsTools": true
-            },
-            "id": "MiniMax-M2.7-highspeed",
-            "input": ["text"],
-            "name": "MiniMax-M2.7-highspeed"
+            }
           }
         ]
       },
@@ -220,7 +214,7 @@
               "supportsTools": true
             },
             "id": "deepseek-v4-flash",
-            "input": ["text"],
+            "input": ["text", "image"],
             "name": "deepseek-v4-flash"
           }
         ]
@@ -239,6 +233,9 @@
         "enabled": true
       },
       "opencode-go": {
+        "enabled": true
+      },
+      "opencode": {
         "enabled": true
       }
     },
