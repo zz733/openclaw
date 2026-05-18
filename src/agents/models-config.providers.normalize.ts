@@ -122,6 +122,16 @@ export function normalizeProviders(params: {
       normalizedProvider = providerSpecificNormalized;
     }
 
+    // Strip fields not recognized by pi-coding-agent's ModelRegistry schema
+    // (e.g. "auth" returned by provider discovery plugins) to prevent
+    // models.json schema validation from failing. (Fixes custom provider
+    // models like opencode-go from being rejected.)
+    const { auth: _auth, ...providerWithoutAuth } = normalizedProvider as Record<string, unknown>;
+    if (_auth !== undefined) {
+      mutated = true;
+      normalizedProvider = providerWithoutAuth as typeof normalizedProvider;
+    }
+
     const existing = next[normalizedKey];
     if (existing) {
       // Keep deterministic behavior if users accidentally define duplicate

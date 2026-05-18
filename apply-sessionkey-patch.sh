@@ -11,7 +11,7 @@
 
 set -e
 
-OPENCLAW_DIR="/Users/liuguanghua/cascade/openclaw-erp/openclaw"
+OPENCLAW_DIR="/Users/liuguanghua/CascadeProjects/openclaw-erp/openclaw"
 PATCH_FILE_DEFAULT="$OPENCLAW_DIR/patches/sessionkey.patch"
 
 CHECK_MODE=false

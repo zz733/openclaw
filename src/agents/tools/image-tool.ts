@@ -216,7 +216,7 @@ async function runImagePrompt(params: {
           model: modelId,
           prompt: params.prompt,
           maxTokens: resolveImageToolMaxTokens(undefined),
-          timeoutMs: 30_000,
+          timeoutMs: 120_000,
           cfg: providerCfg,
           agentDir: params.agentDir,
         });
@@ -234,7 +234,7 @@ async function runImagePrompt(params: {
           model: modelId,
           prompt: params.prompt,
           maxTokens: resolveImageToolMaxTokens(undefined),
-          timeoutMs: 30_000,
+          timeoutMs: 120_000,
           cfg: providerCfg,
           agentDir: params.agentDir,
         });
@@ -251,7 +251,7 @@ async function runImagePrompt(params: {
           model: modelId,
           prompt: `${params.prompt}\n\nDescribe image ${index + 1} of ${params.images.length}.`,
           maxTokens: resolveImageToolMaxTokens(undefined),
-          timeoutMs: 30_000,
+          timeoutMs: 120_000,
           cfg: providerCfg,
           agentDir: params.agentDir,
         });

@@ -200,7 +200,8 @@ function resolveRequestedFallbackModelRef(params: {
   model?: string;
 }): string | null {
   if (params.provider && params.model) {
-    const normalizedRequest = normalizeModelRef(params.provider, params.model);
+    const parsedRef = parseModelRef(params.model, params.provider);
+    const normalizedRequest = parsedRef ?? normalizeModelRef(params.provider, params.model);
     return `${normalizedRequest.provider}/${normalizedRequest.model}`;
   }
   const rawModel = params.model?.trim();

@@ -304,17 +304,11 @@ export async function parseMessageWithAttachments(
     return { message, images: [], imageOrder: [], offloadedRefs: [] };
   }
 
-  // For text-only models drop all attachments cleanly. Do not save files or
-  // inject media:// markers that would never be resolved and would leak
-  // internal path references into the model's prompt.
-  if (opts?.supportsImages === false) {
-    if (attachments.length > 0) {
-      log?.warn(
-        `parseMessageWithAttachments: ${attachments.length} attachment(s) dropped — model does not support images`,
-      );
-    }
-    return { message, images: [], imageOrder: [], offloadedRefs: [] };
-  }
+  // For text-only models we still preserve image attachments so that the
+  // media-understanding pipeline (imageModel) can describe them later.
+  // Only skip the inline injection into the primary model's prompt; the
+  // media:// markers remain available for downstream imageModel processing.
+  const primaryModelSupportsImages = opts?.supportsImages !== false;
 
   const images: ChatImageContent[] = [];
   const imageOrder: PromptImageOrderEntry[] = [];
@@ -377,16 +371,31 @@ export async function parseMessageWithAttachments(
 
       let isOffloaded = false;
 
-      if (sizeBytes > OFFLOAD_THRESHOLD_BYTES) {
+      // When the primary model does not support vision, we offload ALL images
+      // (even small ones) so the media-understanding pipeline (imageModel)
+      // can describe them later.
+      const shouldOffload = sizeBytes > OFFLOAD_THRESHOLD_BYTES || !primaryModelSupportsImages;
+
+      if (shouldOffload) {
         const isSupportedForOffload = SUPPORTED_OFFLOAD_MIMES.has(finalMime);
 
         if (!isSupportedForOffload) {
-          // Passing this inline would reintroduce the OOM risk this PR prevents.
-          throw new Error(
-            `attachment ${label}: format ${finalMime} is too large to pass inline ` +
-              `(${sizeBytes} > ${OFFLOAD_THRESHOLD_BYTES} bytes) and cannot be offloaded. ` +
-              `Please convert to JPEG, PNG, WEBP, GIF, HEIC, or HEIF.`,
+          // If the model supports images we could pass inline, but the format
+          // is not supported for offload. For text-only models this is fatal
+          // because we have no other way to preserve the image.
+          if (primaryModelSupportsImages) {
+            throw new Error(
+              `attachment ${label}: format ${finalMime} is too large to pass inline ` +
+                `(${sizeBytes} > ${OFFLOAD_THRESHOLD_BYTES} bytes) and cannot be offloaded. ` +
+                `Please convert to JPEG, PNG, WEBP, GIF, HEIC, or HEIF.`,
+            );
+          }
+          // For text-only models, silently drop unsupported formats.
+          log?.warn(
+            `attachment ${label}: format ${finalMime} cannot be offloaded and primary model ` +
+              `does not support images; dropping.`,
           );
+          continue;
         }
 
         // Decode and run input-validation BEFORE the MediaOffloadError try/catch.
@@ -418,7 +427,7 @@ export async function parseMessageWithAttachments(
           const mediaRef = `media://inbound/${savedMedia.id}`;
 
           updatedMessage += `\n[media attached: ${mediaRef}]`;
-          log?.info?.(`[Gateway] Intercepted large image payload. Saved: ${mediaRef}`);
+          log?.info?.(`[Gateway] Intercepted image payload. Saved: ${mediaRef}`);
 
           // Record for transcript metadata — separate from `images` because
           // these are not passed inline to the model.
@@ -445,6 +454,8 @@ export async function parseMessageWithAttachments(
         continue;
       }
 
+      // Only reached when the primary model supports vision AND the image is
+      // small enough to pass inline.
       images.push({ type: "image", data: b64, mimeType: finalMime });
       imageOrder.push("inline");
     }

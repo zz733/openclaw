@@ -324,4 +324,46 @@ describe("describeImageWithModel", () => {
     );
     expect(setRuntimeApiKeyMock).toHaveBeenCalledWith("google", "oauth-test");
   });
+
+  it("correctly handles model refs with provider prefix", async () => {
+    const findMock = vi.fn((provider: string, modelId: string) => {
+      expect(provider).toBe("opencode-go");
+      expect(modelId).toBe("qwen3.5-plus");
+      return {
+        provider: "opencode-go",
+        id: "qwen3.5-plus",
+        input: ["text", "image"],
+        baseUrl: "https://opencode.ai/zen/go/v1",
+      };
+    });
+    discoverModelsMock.mockReturnValue({ find: findMock });
+    completeMock.mockResolvedValue({
+      role: "assistant",
+      api: "openai-completions",
+      provider: "opencode-go",
+      model: "qwen3.5-plus",
+      stopReason: "stop",
+      timestamp: Date.now(),
+      content: [{ type: "text", text: "provider prefix ok" }],
+    });
+
+    const result = await describeImageWithModel({
+      cfg: {},
+      agentDir: "/tmp/openclaw-agent",
+      provider: "opencode-go",
+      model: "opencode-go/qwen3.5-plus",
+      buffer: Buffer.from("png-bytes"),
+      fileName: "image.png",
+      mime: "image/png",
+      prompt: "Describe the image.",
+      timeoutMs: 1000,
+    });
+
+    expect(result).toEqual({
+      text: "provider prefix ok",
+      model: "qwen3.5-plus",
+    });
+    expect(findMock).toHaveBeenCalledOnce();
+    expect(findMock).toHaveBeenCalledWith("opencode-go", "qwen3.5-plus");
+  });
 });
